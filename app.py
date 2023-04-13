@@ -4,12 +4,14 @@ from sklearn.metrics.pairwise import cosine_similarity
 import spacy
 
 def main():
+    # Add image logo to the sidebar
+    st.sidebar.image("logo.png", width=150)
     st.sidebar.title("CourseCupid 💘")
     st.sidebar.subheader("A course recommender for CUHK-Shenzhen students")
 
     @st.cache(persist=True, allow_output_mutation=True)
     def load_data():
-        data = pd.read_excel("./processed_ge_course.xlsx")
+        data = pd.read_excel("./processed_df.xlsx")
         raw_data = pd.read_excel("./raw_ge_course.xlsx")
         return data, raw_data
 
@@ -23,15 +25,11 @@ def main():
         doc = nlp(text.lower())
         return " ".join([token.lemma_ for token in doc if not token.is_stop])
 
-    # Preprocess course titles
-    data['processed_title'] = data['Title'].apply(preprocess)
-    data['Description'] = data['Description'].apply(preprocess)
-
     # Calculate the vector representation for each preprocessed title and description
     data['vector_title'] = data['processed_title'].apply(lambda x: nlp(x).vector)
     data['vector_description'] = data['Description'].apply(lambda x: nlp(x).vector)
 
-    # Convert the vectors into matrices for cosine similarity calculation
+       # Convert the vectors into matrices for cosine similarity calculation
     vector_matrix_title = pd.DataFrame(data['vector_title'].tolist())
     vector_matrix_description = pd.DataFrame(data['vector_description'].tolist())
 
