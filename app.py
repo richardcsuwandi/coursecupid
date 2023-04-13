@@ -19,7 +19,7 @@ def main():
     # Load the data
     data, raw_data = load_data()
 
-    # spacy.cli.download("en_core_web_md")
+    spacy.cli.download("en_core_web_md")
     nlp = spacy.load("en_core_web_md")
 
     def preprocess(text):
