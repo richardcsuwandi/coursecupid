@@ -1,7 +1,9 @@
 import streamlit as st
+import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 import spacy
+from spellchecker import SpellChecker
 
 def main():
     # Add image logo to the sidebar
@@ -18,7 +20,9 @@ def main():
     # Load the data
     data, raw_data = load_data()
 
-    spacy.cli.download("en_core_web_md")
+    # If english is not downloaded, download it
+    if not spacy.util.is_package("en_core_web_md"):
+        spacy.cli.download("en_core_web_md")
     nlp = spacy.load("en_core_web_md")
 
     def preprocess(text):
@@ -26,13 +30,15 @@ def main():
         return " ".join([token.lemma_ for token in doc if not token.is_stop])
 
     def recommend_course(topic, num_to_rec=10):
+        # Preprocess and vectorize the input topic
+        spell = SpellChecker()
+        corrected_topic = " ".join([spell.correction(word) for word in topic.split()])
+        preprocessed_topic = preprocess(corrected_topic)
+        input_vector = nlp(preprocessed_topic).vector
+
         # Calculate the vector representation for each preprocessed title and description
         vector_matrix_title = pd.DataFrame(data['processed_title'].apply(lambda x: nlp(x).vector).tolist())
         vector_matrix_description = pd.DataFrame(data['Description'].apply(lambda x: nlp(x).vector).tolist())
-
-        # Preprocess and vectorize the input topic
-        preprocessed_topic = preprocess(topic)
-        input_vector = nlp(preprocessed_topic).vector
 
         # Compute cosine similarity between the input_vector and course title vectors (Model 1)
         cosine_sim_titles = cosine_similarity([input_vector], vector_matrix_title)
@@ -55,6 +61,13 @@ def main():
         rec_df['Similarity Scores'] = selected_course_scores
         return rec_df
 
+    def evaluate_recommendations(rec_df, k):
+        top_k = rec_df['Code'].iloc[:k]
+        top_k_vectors = pd.DataFrame(data['processed_title'].apply(lambda x: nlp(x).vector).tolist()).iloc[top_k.index]
+        pairwise_similarities = cosine_similarity(top_k_vectors)
+        ils = np.mean(pairwise_similarities[np.triu_indices(k, k=1)])
+        return np.round(ils, 2)
+
     st.markdown(" ### Recommended courses")
 
     # Create a text input for the user to input a topic
@@ -70,16 +83,20 @@ def main():
         st.success("Here are some recommended courses for you:")
         st.write(rec_df)
 
+        if num_to_rec > 1:
+            if st.sidebar.checkbox("Show Intra-List Similarity (ILS)"):
+                ils = evaluate_recommendations(rec_df, num_to_rec)
+                st.info(f"ILS for the recommended courses: {ils}")
+
         # Create a list from the recommended courses
         rec_list = rec_df['Code'].tolist()
 
-        # Create a select box for the user to select a course
-        course = st.sidebar.selectbox("Select a course to see its description", rec_list)
-
         # Display the description of the selected course
         st.markdown("### Course description")
+            # Create a select box for the user to select a course
+        course = st.selectbox("Select a course to see its description", rec_list)
         if course:
-            st.success(f"Here is the description for {course}:")
+            # st.success(f"Here is the description for {course}:")
             st.write(raw_data[raw_data['Code'] == course]['Description'].iloc[0])
     else:
         st.warning("Please enter a topic in the sidebar")
