@@ -4,6 +4,36 @@ import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 import spacy
 from spellchecker import SpellChecker
+import neattext.functions as nfx
+import string
+
+def clean_df(file_path):
+    # Read the excel file
+    df = pd.read_excel(file_path)
+
+    # Remove \n and \t
+    df['Title'] = df['Title'].replace('\n', ' ', regex=True).replace('\t', ' ', regex=True)
+    df['Description'] = df['Description'].replace('\n', ' ', regex=True).replace('\t', ' ', regex=True)
+
+    # Remove leading and trailing spaces
+    df['Title'] = df['Title'].apply(lambda x: x.strip())
+    df['Description'] = df['Description'].apply(lambda x: x.strip())
+
+    # Convert to lowercase
+    df['Title'] = df['Title'].str.lower()
+    df['Description'] = df['Description'].str.lower()
+
+    # Remove punctuation, including double quotes
+    punctuation_with_quotes = string.punctuation + '“”'
+    translator = str.maketrans('', '', punctuation_with_quotes)
+    df['Title'] = df['Title'].apply(lambda x: x.translate(translator))
+    df['Description'] = df['Description'].apply(lambda x: x.translate(translator))
+
+    # Remove stopwords
+    df['Title'] = df['Title'].apply(nfx.remove_stopwords)
+    df['Description'] = df['Description'].apply(nfx.remove_stopwords)
+
+    return df
 
 def main():
     # Add image logo to the sidebar
@@ -11,14 +41,9 @@ def main():
     st.sidebar.title("CourseCupid 💘")
     st.sidebar.subheader("A course recommender for CUHK-Shenzhen students")
 
-    @st.cache(persist=True, allow_output_mutation=True)
-    def load_data():
-        data = pd.read_excel("./processed_df.xlsx")
-        raw_data = pd.read_excel("./raw_ge_course.xlsx")
-        return data, raw_data
-
-    # Load the data
-    data, raw_data = load_data()
+    # Load and clean the raw data
+    file_path = 'raw_ge_course.xlsx'
+    cleaned_df = clean_df(file_path)
 
     # If english is not downloaded, download it
     if not spacy.util.is_package("en_core_web_md"):
@@ -26,8 +51,26 @@ def main():
     nlp = spacy.load("en_core_web_md")
 
     def preprocess(text):
+        # Use spacy to lemmatize the text
         doc = nlp(text.lower())
         return " ".join([token.lemma_ for token in doc if not token.is_stop])
+
+    # Preprocess course titles and descriptions
+    processed_df = pd.DataFrame()
+    processed_df['processed_title'] = cleaned_df['Title'].apply(preprocess)
+    processed_df['Description'] = cleaned_df['Description'].apply(preprocess)
+
+    # Save the processed dataframe to an excel file
+    processed_df.to_excel('processed_df.xlsx', index=False)
+
+    # Load the data
+    @st.cache(persist=True, allow_output_mutation=True)
+    def load_data():
+        data = pd.read_excel("./processed_df.xlsx")
+        raw_data = pd.read_excel("./raw_ge_course.xlsx")
+        return data, raw_data
+
+    data, raw_data = load_data()
 
     def recommend_course(topic, num_to_rec=10):
         # Preprocess and vectorize the input topic

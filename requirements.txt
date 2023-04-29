@@ -5,3 +5,4 @@ scikit-learn==1.0.2
 spacy==3.5.2
 xlrd == 1.2.0
 pyspellchecker==0.7.1
+neattext==0.1.3
