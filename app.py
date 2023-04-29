@@ -41,10 +41,6 @@ def main():
     st.sidebar.title("CourseCupid 💘")
     st.sidebar.subheader("A course recommender for CUHK-Shenzhen students")
 
-    # Load and clean the raw data
-    file_path = 'raw_ge_course.xlsx'
-    cleaned_df = clean_df(file_path)
-
     # If english is not downloaded, download it
     if not spacy.util.is_package("en_core_web_md"):
         spacy.cli.download("en_core_web_md")
@@ -55,13 +51,19 @@ def main():
         doc = nlp(text.lower())
         return " ".join([token.lemma_ for token in doc if not token.is_stop])
 
-    # Preprocess course titles and descriptions
-    processed_df = pd.DataFrame()
-    processed_df['processed_title'] = cleaned_df['Title'].apply(preprocess)
-    processed_df['Description'] = cleaned_df['Description'].apply(preprocess)
+    data_processed = True
+    if data_processed == False:
+        # Load and clean the raw data
+        file_path = 'raw_ge_course.xlsx'
+        cleaned_df = clean_df(file_path)
 
-    # Save the processed dataframe to an excel file
-    processed_df.to_excel('processed_df.xlsx', index=False)
+        # Preprocess course titles and descriptions
+        processed_df = pd.DataFrame()
+        processed_df['processed_title'] = cleaned_df['Title'].apply(preprocess)
+        processed_df['Description'] = cleaned_df['Description'].apply(preprocess)
+
+        # Save the processed dataframe to an excel file
+        processed_df.to_excel('processed_df.xlsx', index=False)
 
     # Load the data
     @st.cache(persist=True, allow_output_mutation=True)
