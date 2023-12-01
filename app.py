@@ -23,7 +23,7 @@ def clean_df(file_path):
     df['Title'] = df['Title'].str.lower()
     df['Description'] = df['Description'].str.lower()
 
-    # Remove punctuation, including double quotes
+    # Remove punctuation, including double quotes``
     punctuation_with_quotes = string.punctuation + '“”'
     translator = str.maketrans('', '', punctuation_with_quotes)
     df['Title'] = df['Title'].apply(lambda x: x.translate(translator))
@@ -66,7 +66,7 @@ def main():
         processed_df.to_excel('processed_df.xlsx', index=False)
 
     # Load the data
-    @st.cache(persist=True, allow_output_mutation=True)
+    @st.cache_resource()
     def load_data():
         data = pd.read_excel("./processed_df.xlsx")
         raw_data = pd.read_excel("./raw_ge_course.xlsx")
