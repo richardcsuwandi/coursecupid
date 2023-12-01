@@ -42,8 +42,8 @@ def main():
     st.sidebar.subheader("A course recommender for CUHK-Shenzhen students")
 
     # If english is not downloaded, download it
-    if not spacy.util.is_package("en_core_web_md"):
-        spacy.cli.download("en_core_web_md")
+    # if not spacy.util.is_package("en_core_web_md"):
+    #     spacy.cli.download("en_core_web_md")
     nlp = spacy.load("en_core_web_md")
 
     def preprocess(text):
