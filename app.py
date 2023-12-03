@@ -66,7 +66,7 @@ def main():
         processed_df.to_excel('processed_df.xlsx', index=False)
 
     # Load the data
-    @st.cache_resource()
+    @st.cache(persist=True, allow_output_mutation=True)
     def load_data():
         data = pd.read_excel("./processed_df.xlsx")
         raw_data = pd.read_excel("./raw_ge_course.xlsx")
