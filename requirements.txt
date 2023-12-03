@@ -1,5 +1,5 @@
 streamlit==1.14.0
-numpy==1.19.5
+numpy
 pandas==1.2.2
 scikit-learn==1.0.2
 spacy==3.5.2
