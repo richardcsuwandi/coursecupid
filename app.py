@@ -42,9 +42,11 @@ def main():
     st.sidebar.subheader("A course recommender for CUHK-Shenzhen students")
 
     # If english is not downloaded, download it
-    # if not spacy.util.is_package("en_core_web_md"):
-    # spacy.cli.download("en_core_web_md")
-    nlp = spacy.load("/mount/src/coursecupid/en_core_web_md-3.7.1")
+    if not spacy.util.is_package("en_core_web_md"):
+        spacy.cli.download("en_core_web_md")
+    nlp = spacy.load("en_core_web_md")
+    # nlp = spacy.load("/mount/src/coursecupid/en_core_web_md-3.7.1")
+    # nlp = spacy.load("./en_core_web_md-3.7.1")
 
     def preprocess(text):
         # Use spacy to lemmatize the text
